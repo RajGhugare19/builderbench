@@ -26,6 +26,12 @@ class PromptBuffer:
         for buf in self._buffers.values():
             buf.clear()
 
+    def clear(self, key: str):
+        """Clear the named buffer in place, leaving its maxlen and other buffers intact."""
+        if key not in self._buffers:
+            raise KeyError(f"PromptBuffer key '{key}' is not configured.")
+        self._buffers[key].clear()
+
     def add(self, key: str, value):
         """Append a value to the named buffer, evicting the oldest entry if at capacity."""
         if key not in self._buffers:

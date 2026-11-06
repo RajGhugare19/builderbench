@@ -142,7 +142,7 @@ class ReflexionAgent(BaseAgent):
             self.prompt_buffer.add("previous_summaries", previous_summary)
 
         for key in ["observation", "action", "summary"]:
-            self.prompt_buffer.get(key).clear()
+            self.prompt_buffer.clear(key)
         
         self.trial_index += 1
         self.step_index = 0
