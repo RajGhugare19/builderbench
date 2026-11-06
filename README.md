@@ -83,8 +83,29 @@ uv run python run.py --client_name vllm --base_url http://localhost:8080/v1 --mo
 
 After running `run.py`, results are stored under:
 ```
-outputs/<agent_name>/<model_id>/<level_id>-seed-<seed>-timestamp-<...>/
+outputs/<agent_name>/<model_id>/<level_id>-seed-<seed>-timestamp-<YYYY-MM-DD_HH-MM-SS-ffffff>/
 ```
+
+The `ffffff` microsecond suffix makes each launch land in a fresh
+directory so re-running the same configuration never overwrites an
+earlier result; `run.py` will raise `FileExistsError` on a true
+timestamp collision.  Directories that predate this layout
+(`<level_id>-seed-<seed>` with no `-timestamp-` suffix) are still
+readable by `submit.py` and rank below any timestamped run for the same
+seed.
+
+Per seed, `submit.py` prefers the newest **usable** run and falls back to
+older candidates when the newest one is unusable (missing, empty, or
+unparseable `eval_summary.jsonl` / `run_metadata.json`, episodes that
+violate the schema the aggregation consumes, or non-finite numeric
+values such as NaN or Infinity). Every fallback
+is reported on stderr as a `[submit-fallback]` line naming the seed, the
+skipped directory, and the reason. If any discovered seed has no usable
+candidate at all, `submit.py` exits non-zero (exit code 2) instead of
+silently aggregating fewer seeds. Note that a *usable* run is not
+necessarily a *completed* one: `eval_summary.jsonl` carries no
+end-of-run marker, so a run that crashed partway through is currently
+not reliably distinguishable from a completed run with fewer episodes.
 
 Each run directory contains `eval_summary.jsonl`, `run_config.json`, and `run_metadata.json`.
 

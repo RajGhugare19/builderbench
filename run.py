@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from agents import create_agent
+from output_paths import build_run_dirname, format_timestamp
 from utils import setup_environment_variables, seed_everything, get_experiment_data, print_summary_table
 
 from builderbench.creative_cube_env import CreativeCubeEnv
@@ -55,9 +56,10 @@ def main(config: Args):
     setup_environment_variables(original_cwd=Path(__file__).resolve().parent)
 
     # create output directory
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_path = os.path.join(config.output_dir, f"{config.agent_config.agent_name}", f"{config.llm_config.model_id}", f"{config.level_id}-seed-{config.seed}")
-    Path(output_path).mkdir(exist_ok=True, parents=True)
+    timestamp = format_timestamp(datetime.now())
+    run_dirname = build_run_dirname(config.level_id, config.seed, timestamp)
+    output_path = os.path.join(config.output_dir, config.agent_config.agent_name, config.llm_config.model_id, run_dirname)
+    Path(output_path).mkdir(exist_ok=False, parents=True)
 
     # capture run metadata and config
     run_metadata, run_config = get_experiment_data(config, timestamp, global_seed_info)
