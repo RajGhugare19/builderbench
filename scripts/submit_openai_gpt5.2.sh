@@ -15,7 +15,7 @@ if [[ ! -d "${RUNS_DIR}" ]]; then
 fi
 
 LEVEL_IDS=$(find "${RUNS_DIR}/${AGENT_NAME}/${MODEL_ID}" -maxdepth 1 -type d -name 'cube-[0-9]*-task-*-seed-*' -printf '%f\n' \
-	| sed -E 's/-seed-[0-9]+$//' \
+	| sed -E 's/-seed-[0-9]+(-timestamp-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9])?$//' \
 	| sort -u)
 
 for level_id in ${LEVEL_IDS}; do
