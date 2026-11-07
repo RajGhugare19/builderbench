@@ -72,11 +72,19 @@ class NaiveAgent(BaseAgent):
 
         for i in range(len(observations)):
             action_idx = i + action_offset
-            if action_idx >= 0 and i > 0:
-                message = Message(role="assistant", content=actions[action_idx])
+            pending_action = actions[action_idx] if action_idx >= 0 else None
+            if pending_action is not None and (messages and messages[-1].role == "user"):
+                message = Message(role="assistant", content=pending_action)
                 messages.append(message)
+                pending_action = None
 
             message_parts = []
+            if pending_action is not None:
+                # No preceding user message: an assistant turn here would be
+                # an invalid leading assistant, so keep the causal action as
+                # labelled context inside the observation message instead.
+                message_parts.append("Prior agent action (context):")
+                message_parts.append(pending_action)
             if i == len(observations) - 1:
                 message_parts.append("Current Observation:")
             else:
