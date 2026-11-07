@@ -83,16 +83,29 @@ class CoTAgent(BaseAgent):
             reasoning_idx = i + reasoning_offset
             action_idx = i + action_offset
 
-            if reasoning_idx >= 0 and i > 0:
-                content = "Previous plan:\n" + reasonings[reasoning_idx]
-                message = Message(role="assistant", content=content)
-                messages.append(message)
+            # because reasoning contains the action, only fall back to the
+            # action when no reasoning is available for this observation
+            pending_label = None
+            pending_content = None
+            if reasoning_idx >= 0:
+                pending_label = "Prior agent reasoning (context):"
+                pending_content = "Previous plan:\n" + reasonings[reasoning_idx]
+            elif action_idx >= 0:
+                pending_label = "Prior agent action (context):"
+                pending_content = actions[action_idx]
 
-            elif action_idx >= 0 and i > 0:
-                message = Message(role="assistant", content=actions[action_idx])        # because reasoning contains the action, we only add action if reasoning wasn't added
+            if pending_content is not None and (messages and messages[-1].role == "user"):
+                message = Message(role="assistant", content=pending_content)
                 messages.append(message)
+                pending_content = None
 
             message_parts = []
+            if pending_content is not None:
+                # No preceding user message: an assistant turn here would be
+                # an invalid leading assistant, so keep the causal context
+                # inside the observation message instead.
+                message_parts.append(pending_label)
+                message_parts.append(pending_content)
             if i == len(observations) - 1:
                 message_parts.append("Current Observation:")
             else:
